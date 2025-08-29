@@ -2,10 +2,11 @@
 #include <ArduinoJson.h>
 #include <ArduinoHttpClient.h>
 
-int analogPin = A1;
+int analogPin = A0;
 
 const int averageValue = 500;
 long int sensorValue = 0;
+float sensitivity = 0.100; 
 
 float voltage = 0;
 float current = 0;
@@ -71,7 +72,7 @@ void getCurrent_MA() {
 
   sensorValue = sensorValue / averageValue;
   voltage = sensorValue * 5.0 / 1024.0;
-  current = (voltage - zeroOffset) / 0.185;
+  current = (voltage - zeroOffset) / sensitivity;
   //current = (voltage) / 0.185;
 
   Serial.print("ADC Value: ");
@@ -93,13 +94,16 @@ void loop() {
     getCurrent_MA();
   }
   publishTelemetryJSON(current);
+  delay(5000);
 }
 
 void publishTelemetryJSON(float current)
 {
   StaticJsonDocument<200> doc;
   doc["Current"] = random(0, 5000) / 1000.0; // 1.0; //current
-
+  doc["Voltage"] = random(0, 220);
+  doc["Temperature"] = random(-40, 50);
+  //doc["Current"] = current;
   // Serialize to string
   String jsonString;
   serializeJson(doc, jsonString);
@@ -157,6 +161,7 @@ void publishJSONToAPI(String content)
   Serial.println(statusCode);
   Serial.print("Response: ");
   Serial.println(response);
+  apiClient.stop();
 }
 
 void publishJSONToLocalServer(String content)
