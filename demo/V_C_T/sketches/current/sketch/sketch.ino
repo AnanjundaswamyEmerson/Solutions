@@ -14,17 +14,23 @@ float zeroOffset = 0;
 unsigned long lastSample = 0;
 const int sampleInterval = 1000; // 1 second
 
-char serverAddress[] = "192.168.0.109";
-int port = 8080;
+char serverAddress[] = "192.168.0.111";
+int port = 8086;
 
 char ssid[] = "Arvind";   // WiFi SSID
 char pass[] = "Chinnu2002"; // WiFi password
 
 WiFiServer server(801);  // create a server on port 801 (HTTP)
+String accessKey = "9zj9f8rzehh2hexpdt0a";
 
 WiFiClient wifi;
 HttpClient apiClient = HttpClient(wifi, serverAddress, port);
-String accessKey = "9zj9f8rzehh2hexpdt0a";
+
+const String influxDBBucket = "telemetry";
+const String influxDBToken = "A0uOFYv_WhO13kMh0m1frgynZBnB1KEwnaALsIzGKDUqeNrLM9vMjQRM9ZA9ToepqHSZcvVFmF0YCvbID4K94g==";
+const String org = "Vidasmi Drone Private Limited";
+const String orgID = "5e718852ea4f4dff";
+const String bucket = "SolarTelemetry";
 
 void setup() {
   Serial.begin(9600);
@@ -93,8 +99,73 @@ void loop() {
     lastSample = now;
     getCurrent_MA();
   }
-  publishTelemetryJSON(current);
-  delay(5000);
+  //publishTelemetryJSON(current);
+  publishTelemetryToInfluxDB(current);
+  delay(60000);
+}
+
+void publishTelemetryToInfluxDB(float current)
+{
+  String url = "/api/v2/write?org=" + orgID + "&bucket=" + bucket + "&precision=s";
+  String data = "SolarTelemetry Current=" + String(random(0, 12)) + // Amps
+                        ",Voltage=" + String(random(500, 1500)) + // VDC
+                        ",Temperature=" + String(random(-10, 85)) +  // C
+                        ",HorizontalIrradiance=" + String(random(0, 1200)) + // W
+                        ",ModuleTemperature=" + String(random(-10, 85)) + // C
+                        ",ArrayCurrent=" + String(random(-20, 50)) + // Amps
+                        ",ArrayVoltage=" + String(random(500,1500)) + // VDC
+                        ",InverterACPower=" + String(random(500, 5000)) + // kWH
+                        ",InverterEfficiency=" + String(random(96, 99)) + // %ge
+                        ",GridFrequency=" + String(random(49.5, 50.5)) + // Hz
+                        ",ActivePower=" + String(random(-20, 50)); // kW, MW
+          
+  apiClient.beginRequest();
+  apiClient.post(url); // Your server endpoint
+  apiClient.sendHeader("Content-Type", "text/plain");
+  apiClient.sendHeader("Authorization", "Token " + String(influxDBToken));
+  apiClient.sendHeader("Content-Length", data.length());
+
+  Serial.print("Writing to API: "); 
+  Serial.println(url);
+  Serial.println(data);
+
+  apiClient.beginBody();
+  apiClient.print(data);
+  apiClient.endRequest();
+
+  // Response
+  int statusCode = apiClient.responseStatusCode();
+  String response = apiClient.responseBody();
+  Serial.print("Status: ");
+  Serial.println(statusCode);
+  Serial.print("Response: ");
+  Serial.println(response);
+  apiClient.stop();
+}
+
+void publishJSONToAPI(String content)
+{
+  String url = "/api/v1/" + accessKey + "/telemetry";
+  apiClient.beginRequest();
+  apiClient.post(url); // Your server endpoint
+  apiClient.sendHeader("Content-Type", "application/json");
+  apiClient.sendHeader("Content-Length", content.length());
+  //apiClient.sendHeader("Authorization", accessKey);
+  Serial.print("Writing to API: ");
+  Serial.println(content);
+
+  apiClient.beginBody();
+  apiClient.print(content);
+  apiClient.endRequest();
+
+  // Response
+  int statusCode = apiClient.responseStatusCode();
+  String response = apiClient.responseBody();
+  Serial.print("Status: ");
+  Serial.println(statusCode);
+  Serial.print("Response: ");
+  Serial.println(response);
+  apiClient.stop();
 }
 
 void publishTelemetryJSON(float current)
@@ -139,30 +210,6 @@ void publishText(float current)
   }
 }
 
-void publishJSONToAPI(String content)
-{
-  String url = "/api/v1/" + accessKey + "/telemetry";
-  apiClient.beginRequest();
-  apiClient.post(url); // Your server endpoint
-  apiClient.sendHeader("Content-Type", "application/json");
-  apiClient.sendHeader("Content-Length", content.length());
-  //apiClient.sendHeader("Authorization", accessKey);
-  Serial.print("Writing to API: ");
-  Serial.println(content);
-
-  apiClient.beginBody();
-  apiClient.print(content);
-  apiClient.endRequest();
-
-  // Response
-  int statusCode = apiClient.responseStatusCode();
-  String response = apiClient.responseBody();
-  Serial.print("Status: ");
-  Serial.println(statusCode);
-  Serial.print("Response: ");
-  Serial.println(response);
-  apiClient.stop();
-}
 
 void publishJSONToLocalServer(String content)
 {
@@ -185,4 +232,5 @@ void publishJSONToLocalServer(String content)
       client.stop();  // close the connection
       Serial.println("Client disconnected");
 }
+
 }
