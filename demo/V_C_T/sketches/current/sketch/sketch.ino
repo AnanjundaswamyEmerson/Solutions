@@ -114,10 +114,11 @@ void publishTelemetryToInfluxDB(float current)
                         ",ModuleTemperature=" + String(random(-10, 85)) + // C
                         ",ArrayCurrent=" + String(random(-20, 50)) + // Amps
                         ",ArrayVoltage=" + String(random(500,1500)) + // VDC
-                        ",InverterACPower=" + String(random(500, 5000)) + // kWH
-                        ",InverterEfficiency=" + String(random(96, 99)) + // %ge
+                        ",InverterACPower=" + String(100*(random(10, 20)/10.0)) + // kWH/min for 100 acres
+                        ",InverterEfficiency=" + String(random(960, 990)/10.0) + // %ge
                         ",GridFrequency=" + String(random(49.5, 50.5)) + // Hz
-                        ",ActivePower=" + String(random(-20, 50)); // kW, MW
+                        ",ActivePower=" + String(random(-20, 50)) + 
+                        ",CUF=" + String(random(150, 250)/10.0); // %ge
           
   apiClient.beginRequest();
   apiClient.post(url); // Your server endpoint
