@@ -101,7 +101,7 @@ void loop() {
   }
   //publishTelemetryJSON(current);
   publishTelemetryToInfluxDB(current);
-  delay(60000);
+  delay(10);
 }
 
 void publishTelemetryToInfluxDB(float current)
