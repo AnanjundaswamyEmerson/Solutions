@@ -14,7 +14,7 @@ float zeroOffset = 0;
 unsigned long lastSample = 0;
 const int sampleInterval = 1000; // 1 second
 
-char serverAddress[] = "192.168.0.111";
+char serverAddress[] = "192.168.0.112";
 int port = 8086;
 
 char ssid[] = "Arvind";   // WiFi SSID
@@ -117,8 +117,11 @@ void publishTelemetryToInfluxDB(float current)
                         ",InverterACPower=" + String(100*(random(10, 20)/10.0)) + // kWH/min for 100 acres
                         ",InverterEfficiency=" + String(random(960, 990)/10.0) + // %ge
                         ",GridFrequency=" + String(random(49.5, 50.5)) + // Hz
-                        ",ActivePower=" + String(random(-20, 50)) + 
-                        ",CUF=" + String(random(150, 250)/10.0); // %ge
+                        ",Irridiance=" + String(random(0, 1200)) + // W/m2
+                        ",Rain=" + String(random(0, 80)/10.0) + // mm/hr
+                        ",CUF=" + String(random(150, 250)/10.0) + // %ge
+                        ",ActiveStringPower=" + String(random(1000, 2000)/10.0) + // kW
+                        ",StringNumber=" + String(random(0, 10)); // String id
           
   apiClient.beginRequest();
   apiClient.post(url); // Your server endpoint
